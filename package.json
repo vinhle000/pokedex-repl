@@ -1,0 +1,30 @@
+{
+  "name": "pokedex-repl",
+  "version": "1.0.0",
+  "description": "Pokedex in a command-line REPL using PokeAPI",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+
+    "build": "npx tsc",
+    "start": "node dist/main.js",
+    "dev": "npx tsc && node dist/main.js",
+    "test": "vitest --run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinhle000/pokedex-repl.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/vinhle000/pokedex-repl/issues"
+  },
+  "homepage": "https://github.com/vinhle000/pokedex-repl#readme",
+  "devDependencies": {
+    "@types/node": "^24.2.1",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  }
+}
