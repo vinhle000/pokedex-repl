@@ -3,10 +3,10 @@ import { initState, type State } from './state.js';
 
 const initialState: State = initState();
 
-function main(state: State) {
+async function main(state: State) {
   const { readLineInterface: rl, commands } = state;
   rl.prompt();
-  rl.on('line', (line) => {
+  rl.on('line', async (line) => {
     const words = cleanInput(line);
     if (words.length === 0) {
       rl.prompt();
@@ -15,7 +15,7 @@ function main(state: State) {
       const command = commands[inputCommand];
 
       if (!!command) {
-        command.callback(state);
+        await command.callback(state);
       } else {
         console.log('Unknown command');
       }
@@ -26,3 +26,11 @@ function main(state: State) {
 }
 
 main(initialState);
+
+/*
+Update the entrypoint to treat the repl loop as an async function and properly await the callback functions.
+
+Handle potential network errors with a try/catch block.
+You can make GET requests in your browser or by using curl! It's convenient for testing and debugging.
+
+*/
