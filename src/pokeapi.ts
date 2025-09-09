@@ -16,7 +16,7 @@ export class PokeAPI {
     // Check if in cache
     const cached = this.cache.get<ShallowLocations>(url);
     if (cached) {
-      console.log(`DEBUG ----- ShallowLocations found in cache \n`);
+      // console.log(`DEBUG ----- ShallowLocations found in cache \n`);
       return cached;
     }
 
@@ -108,6 +108,7 @@ export class PokeAPI {
     data.pokemon_encounters.forEach((item: any) => {
       const pokemon: Pokemon = {
         name: item.pokemon.name,
+        baseExperience: item.pokemon.base_experience,
         url: item.pokemon.url,
       };
       pokemonEncounters.push(pokemon);
@@ -120,6 +121,35 @@ export class PokeAPI {
 
     this.cache.add<LocationAreaInfo>(url, locationAreaInfo);
     return locationAreaInfo;
+  }
+
+  // GET https://pokeapi.co/api/v2/pokemon/{id or name}/
+  async fetchPokemonInfo(pokemonName: string): Promise<Pokemon> {
+    const url = `${PokeAPI.baseURL}/pokemon/${pokemonName}`;
+
+    const response = await fetch(url, { method: 'GET' });
+
+    if (!response.ok) {
+      console.error(`Failed to fetch pokemon - "${pokemonName}`);
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    //get data
+    const data = await response.json();
+    const urlById = `${url.replace(pokemonName, data.id)}`;
+
+    // console.debug(' url by ID ---------> ', urlById);
+
+    /* NOTE: base experiences ranges from  635. The lowest base experience values
+     are held by Sunkern and Blipbug, both with yields of 36
+    */
+    const pokemon: Pokemon = {
+      name: data.name,
+      baseExperience: data.base_experience,
+      url: urlById,
+    };
+
+    return pokemon;
   }
 }
 
@@ -143,6 +173,7 @@ export type Location = {
 
 export type Pokemon = {
   name: string;
+  baseExperience?: number;
   url: string;
 };
 
