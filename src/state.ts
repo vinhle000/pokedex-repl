@@ -3,12 +3,13 @@ import { stdin, stdout } from 'node:process';
 import { commandExit } from './command_exit.js';
 import { commandHelp } from './command_help.js';
 import { commandMap, commandMapBack } from './command_map.js';
+import { commandExplore } from './command_explore.js';
 import { PokeAPI } from './pokeapi.js';
 
 export type CLICommand = {
   name: string;
   description: string;
-  callback: (state: State) => Promise<void>;
+  callback: (state: State, ...args: string[]) => Promise<void>;
 };
 
 export type State = {
@@ -40,6 +41,11 @@ export function getCommands(): Record<string, CLICommand> {
       name: 'mapb',
       description: `Fetches prev 20 location areas from PokeAPI`,
       callback: commandMapBack,
+    },
+    explore: {
+      name: 'explore',
+      description: `Fetch list of pokemon encounters in the provided location area`,
+      callback: commandExplore,
     },
   };
 }

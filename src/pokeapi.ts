@@ -43,15 +43,14 @@ export class PokeAPI {
     return shallowLocations;
   }
 
-  // GET /location-area/{id or name}
+  // GET /location-area/{id or name} --- basic location info only
   async fetchLocation(locationName: string): Promise<Location> {
     //??? - do we need to urlEncode the location name in the url string literal
     const url = `${PokeAPI.baseURL}/location-area/${locationName}`;
+    const cacheKey = `${url}/location-only`; // DISTINGUISH unique key for basic location info only
 
-    //TODO check and add to cachei
-    const cached = this.cache.get<Location>(url);
+    const cached = this.cache.get<Location>(cacheKey);
     if (cached) {
-      console.log(`DEBUG ----- locations found in cache \n`);
       return cached;
     }
 
@@ -76,6 +75,52 @@ export class PokeAPI {
     this.cache.add<Location>(url, location);
     return location;
   }
+
+  // GET /location-area/{id or name}  --- includes location info and pokemonEncounters list
+  async fetchLocationAreaInfo(locationName: string): Promise<LocationAreaInfo> {
+    const url = `${PokeAPI.baseURL}/location-area/${locationName}`;
+
+    const cached = await this.cache.get<LocationAreaInfo>(url);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await fetch(url, { method: 'GET' });
+
+    if (!response.ok) {
+      console.error('Failed to fetch location area info by name');
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.location) {
+      throw new Error(`No location area found with name-${locationName}`);
+    }
+
+    if (!data.pokemon_encounters) {
+      throw new Error(
+        `No pokemon encounters found for location-area: ${locationName}`
+      );
+    }
+
+    const pokemonEncounters: Pokemon[] = [];
+    data.pokemon_encounters.forEach((item: any) => {
+      const pokemon: Pokemon = {
+        name: item.pokemon.name,
+        url: item.pokemon.url,
+      };
+      pokemonEncounters.push(pokemon);
+    });
+
+    const locationAreaInfo: LocationAreaInfo = {
+      location: data.location,
+      pokemonEncounters: pokemonEncounters,
+    };
+
+    this.cache.add<LocationAreaInfo>(url, locationAreaInfo);
+    return locationAreaInfo;
+  }
 }
 
 export type ShallowLocations = {
@@ -85,8 +130,18 @@ export type ShallowLocations = {
   locations: Location[]; // results from response.data
 };
 
+export type LocationAreaInfo = {
+  location: Location;
+  pokemonEncounters: Pokemon[];
+};
+
 export type Location = {
   // add properties herelo
+  name: string;
+  url: string;
+};
+
+export type Pokemon = {
   name: string;
   url: string;
 };
@@ -103,6 +158,17 @@ const sample = {
     {
       name: 'eterna-city-area',
       url: 'https://pokeapi.co/api/v2/location-area/2/',
+    },
+  ],
+};
+
+const samplePokemonEncounters = {
+  pokemon_encounters: [
+    {
+      pokemon: {
+        name: 'fearow',
+        url: 'https://pokeapi.co/api/v2/pokemon/22/',
+      },
     },
   ],
 };

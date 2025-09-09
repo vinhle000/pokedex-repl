@@ -14,7 +14,9 @@ async function main(state: State) {
       const inputCommand = words[0];
       const command = commands[inputCommand];
 
-      if (!!command) {
+      if (!!command && words.length > 1) {
+        await command.callback(state, ...words.slice(1)); // Spread the array
+      } else if (!!command) {
         await command.callback(state);
       } else {
         console.log('Unknown command');
