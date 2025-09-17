@@ -16,7 +16,6 @@ export class PokeAPI {
     // Check if in cache
     const cached = this.cache.get<ShallowLocations>(url);
     if (cached) {
-      // console.log(`DEBUG ----- ShallowLocations found in cache \n`);
       return cached;
     }
 
@@ -129,6 +128,7 @@ export class PokeAPI {
 
     const response = await fetch(url, { method: 'GET' });
 
+    // BUG:Need to handle 404 responses, when incorrect name is give and used in request
     if (!response.ok) {
       console.error(`Failed to fetch pokemon - "${pokemonName}`);
       throw new Error(`Response status: ${response.status}`);
@@ -138,14 +138,46 @@ export class PokeAPI {
     const data = await response.json();
     const urlById = `${url.replace(pokemonName, data.id)}`;
 
-    // console.debug(' url by ID ---------> ', urlById);
+    const pokemonStats: PokemonStats = {
+      hp: 0,
+      attack: 0,
+      defense: 0,
+      specialAttack: 0,
+      specialDefense: 0,
+      speed: 0,
+    };
 
-    /* NOTE: base experiences ranges from  635. The lowest base experience values
-     are held by Sunkern and Blipbug, both with yields of 36
-    */
+    // helper util function to normalize field names to camel case
+    const toCamelCase = function (input: string) {
+      return input
+        .split('-')
+        .map((word, index) =>
+          index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+        )
+        .join('');
+    };
+
+    data.stats.forEach(
+      (item: { base_stat: number; stat: { name: string } }) => {
+        const statName = toCamelCase(item.stat.name);
+
+        if (statName in pokemonStats) {
+          pokemonStats[statName as keyof PokemonStats] = item.base_stat;
+        }
+      }
+    );
+
+    const pokemonInfo: PokemonInfo = {
+      height: data.height,
+      weight: data.weight,
+      stats: pokemonStats,
+      types: data.types.map((type: any) => type.type.name),
+    };
+
     const pokemon: Pokemon = {
       name: data.name,
       baseExperience: data.base_experience,
+      pokemonInfo: pokemonInfo,
       url: urlById,
     };
 
@@ -171,10 +203,29 @@ export type Location = {
   url: string;
 };
 
+// TODO: modify to have nested types,
+// * Maybe put baseExperience in pokemon info when refactor?
 export type Pokemon = {
   name: string;
   baseExperience?: number;
+  pokemonInfo?: PokemonInfo;
   url: string;
+};
+
+export type PokemonInfo = {
+  height: number;
+  weight: number;
+  stats: PokemonStats;
+  types: string[];
+};
+
+type PokemonStats = {
+  hp: number;
+  attack: number;
+  defense: number;
+  specialAttack: number;
+  specialDefense: number;
+  speed: number;
 };
 
 const sample = {
